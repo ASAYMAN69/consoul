@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consoul Terminal</title>
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+    <div id="terminal-container">
+        <div id="output-log"></div>
+        <div id="input-line">
+            <span id="prompt">user@consoul:~$</span>
+            <div id="input-wrapper">
+                <input type="text" id="terminal-input" autofocus spellcheck="false" autocomplete="off">
+                <span id="autosuggest"></span>
+            </div>
+        </div>
+    </div>
+    <div id="editor-container" class="hidden">
+        <div id="editor-header"></div>
+        <textarea id="editor-textarea" spellcheck="false"></textarea>
+        <div id="editor-footer">^S Save | ^X Exit</div>
+    </div>
+    <canvas id="matrix-canvas" class="hidden"></canvas>
+    <canvas id="snake-canvas" class="hidden"></canvas>
+    <div class="scanlines"></div>
+    <script type="module" src="js/core/ui.js"></script>
+</body>
+</html>

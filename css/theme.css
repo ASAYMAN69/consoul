@@ -1,0 +1,68 @@
+:root {
+    --bg-color: #0d0d0d;
+    --text-color: #00ff00;
+    --prompt-color: #00ff00;
+    --cursor-color: #00ff00;
+}
+
+body.theme-matrix {
+    --bg-color: #000;
+    --text-color: #00ff00;
+    --prompt-color: #00ff00;
+    --cursor-color: #00ff00;
+}
+
+body.theme-ubuntu {
+    --bg-color: #300a24;
+    --text-color: #fff;
+    --prompt-color: #dfdbd2;
+    --cursor-color: #fff;
+}
+
+body.theme-retro {
+    --bg-color: #222;
+    --text-color: #ffb000; /* Amber */
+    --prompt-color: #ffb000;
+    --cursor-color: #ffb000;
+}
+
+body.theme-classic {
+    --bg-color: #f0f0f0;
+    --text-color: #000;
+    --prompt-color: #000;
+    --cursor-color: #000;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#terminal-input {
+    color: var(--text-color);
+    caret-color: var(--cursor-color);
+}
+
+#prompt {
+    color: var(--prompt-color);
+    font-weight: bold;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
