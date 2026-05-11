@@ -13,6 +13,13 @@ class Shell {
         this.isRoot = false;
         this.authMode = false;
         this.pendingSudoCommand = null;
+        this.validCommands = [
+            'ls', 'cd', 'pwd', 'mkdir', 'touch', 'rm', 'cat', 'echo', 'write', 'append', 
+            'clear', 'grep', 'find', 'export', 'alias', 'help', 'history', 'reset', 
+            'whoami', 'date', 'uptime', 'uname', 'exit', 'env', 'mv', 'cp',
+            'sudo', 'chmod', 'chown', 'ps', 'top', 'who', 'head', 'tail', 'wc', 'edit', 'fetch', 'matrix',
+            'sh', 'ping', 'curl', 'theme', 'snake', 'nano', 'vim'
+        ];
     }
 
     loadHistory() {
@@ -89,18 +96,23 @@ class Shell {
 
             this.pipeInput = pipeInput;
 
+            // Check aliases
+            const actualCommand = this.aliases[commandName] || commandName;
+
+            if (!this.validCommands.includes(actualCommand)) {
+                return `consoul: command not found: ${commandName}`;
+            }
+
             try {
-                // Check aliases
-                const actualCommand = this.aliases[commandName] || commandName;
                 const module = await import(`../commands/${actualCommand}.js`);
                 if (module && module.default) {
                     pipeInput = await module.default(expandedArgs, this);
                 } else {
-                    return `consoul: command not found: ${commandName}`;
+                    return `consoul: internal error: ${actualCommand}.js is empty`;
                 }
             } catch (e) {
                 console.error(e);
-                return `consoul: command not found: ${commandName}`;
+                return `consoul: error executing command: ${commandName}`;
             }
         }
 
@@ -129,14 +141,22 @@ class Shell {
             return await this.execute(cmd);
         } else {
             this.pendingSudoCommand = null;
-            return 'sudo: 1 incorrect password attempt';
+            return 'sudo: 1 incorrect password attempt. You seriously didnt even read the docs? https://github.com/ASAYMAN69/consoul.git go read ts.';
         }
     }
 
     tokenize(input) {
-        // Simple tokenizer handling spaces for now. 
-        // Future: handle quotes and pipes.
-        return input.match(/(?:[^\s"]+|"[^"]*")+/g).map(token => token.replace(/"/g, ''));
+        // Simple tokenizer handling spaces and tilde expansion
+        const matches = input.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+        return matches.map(token => {
+            let t = token.replace(/"/g, '');
+            if (t.startsWith('~/')) {
+                t = this.env['HOME'] + t.slice(1);
+            } else if (t === '~') {
+                t = this.env['HOME'];
+            }
+            return t;
+        });
     }
 
     setEnv(key, value) {
@@ -167,7 +187,7 @@ class Shell {
                 'clear', 'grep', 'find', 'export', 'alias', 'help', 'history', 'reset', 
                 'whoami', 'date', 'uptime', 'uname', 'exit', 'env', 'mv', 'cp',
                 'sudo', 'chmod', 'chown', 'ps', 'top', 'who', 'head', 'tail', 'wc', 'edit', 'fetch', 'matrix',
-                'sh', 'ping', 'curl', 'theme', 'snake'
+                'sh', 'ping', 'curl', 'theme', 'snake', 'nano', 'vim'
             ];
             return commands.filter(c => c.startsWith(lastToken));
         } else {

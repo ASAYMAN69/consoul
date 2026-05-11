@@ -1,5 +1,5 @@
 export default async function theme(args, shell) {
-    const validThemes = ['matrix', 'ubuntu', 'retro', 'classic'];
+    const validThemes = ['matrix', 'ubuntu', 'retro', 'classic', 'nord', 'monokai'];
     const chosenTheme = args[0];
 
     if (!chosenTheme) {

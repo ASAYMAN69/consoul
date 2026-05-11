@@ -36,7 +36,30 @@ class VFS {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
             try {
-                return JSON.parse(data);
+                const parsed = JSON.parse(data);
+                
+                // MIGRATION: move 'home/user' to 'home/ayman'
+                if (parsed['/'] && parsed['/'].children && parsed['/'].children.home && parsed['/'].children.home.children.user) {
+                    console.log("Migrating VFS from 'user' to 'ayman'...");
+                    const userData = parsed['/'].children.home.children.user;
+                    delete parsed['/'].children.home.children.user;
+                    parsed['/'].children.home.children.ayman = userData;
+                    parsed['/'].children.home.children.ayman.owner = 'ayman';
+                    // Update permissions recursively
+                    const updatePerms = (node) => {
+                        if (node.owner === 'user') node.owner = 'ayman';
+                        if (node.children) {
+                            for (const key in node.children) updatePerms(node.children[key]);
+                        }
+                    };
+                    updatePerms(parsed['/'].children.home.children.ayman);
+                    this.save(parsed);
+                    return parsed;
+                }
+
+                if (parsed['/'] && parsed['/'].children && parsed['/'].children.home && parsed['/'].children.home.children.ayman) {
+                    return parsed;
+                }
             } catch (e) {
                 console.error("Failed to parse VFS data, resetting to default.", e);
             }
@@ -50,9 +73,14 @@ class VFS {
     }
 
     resolvePath(path, cwd = '/') {
-        let absolutePath = path.startsWith('/') ? path : (cwd === '/' ? '/' + path : cwd + '/' + path);
+        let absolutePath;
+        if (path.startsWith('/')) {
+            absolutePath = path;
+        } else {
+            absolutePath = cwd === '/' ? '/' + path : cwd + '/' + path;
+        }
         
-        // Normalize path (remove double slashes, handle . and ..)
+        // Remove multiple slashes and handle root
         const parts = absolutePath.split('/').filter(p => p.length > 0);
         const stack = [];
         for (const part of parts) {

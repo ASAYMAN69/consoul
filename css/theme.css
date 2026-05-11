@@ -12,6 +12,20 @@ body.theme-matrix {
     --cursor-color: #00ff00;
 }
 
+body.theme-nord {
+    --bg-color: #2e3440;
+    --text-color: #d8dee9;
+    --prompt-color: #88c0d0;
+    --cursor-color: #88c0d0;
+}
+
+body.theme-monokai {
+    --bg-color: #272822;
+    --text-color: #f8f8f2;
+    --prompt-color: #a6e22e;
+    --cursor-color: #f8f8f2;
+}
+
 body.theme-ubuntu {
     --bg-color: #300a24;
     --text-color: #fff;

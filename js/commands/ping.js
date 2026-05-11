@@ -4,6 +4,8 @@ export default async function ping(args, shell) {
     const host = args[0];
     const { ui } = await import('../core/ui.js');
     
+    ui.printOutput(`--- Consoul Network Simulation: Pinging ${host} ---`);
+    ui.printOutput(`Seriously bruh? -_- ts made with pure HTML CSS and JS. why tf would you think that this command was gonna work huh?`);
     ui.printOutput(`PING ${host} (127.0.0.1) 56(84) bytes of data.`);
 
     return new Promise((resolve) => {

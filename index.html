@@ -3,7 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consoul Terminal</title>
+    <title>Consoul Terminal - Web-Based Terminal Emulator</title>
+    <meta name="description" content="Consoul Terminal is a fully functional web-based terminal emulator with a virtual file system, built-in Unix commands, text editors (nano/vim), and retro games.">
+    <meta name="keywords" content="terminal emulator, web terminal, unix terminal, command line, virtual terminal, browser terminal, console, shell, bash, online terminal">
+    <meta name="author" content="Consoul">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Consoul Terminal - Web-Based Terminal Emulator">
+    <meta property="og:description" content="Experience a fully functional Unix-like terminal directly in your browser. Features virtual file system, nano/vim editors, and retro games.">
+    <meta property="og:url" content="https://consoul.dev">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Consoul Terminal - Web-Based Terminal Emulator">
+    <meta name="twitter:description" content="Experience a fully functional Unix-like terminal directly in your browser. Features virtual file system, nano/vim editors, and retro games.">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://consoul.dev">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/theme.css">
 </head>
@@ -23,6 +42,7 @@
         <textarea id="editor-textarea" spellcheck="false"></textarea>
         <div id="editor-footer">^S Save | ^X Exit</div>
     </div>
+    <div id="sys-monitor">CPU: 2% | MEM: 20%</div>
     <canvas id="matrix-canvas" class="hidden"></canvas>
     <canvas id="snake-canvas" class="hidden"></canvas>
     <div class="scanlines"></div>

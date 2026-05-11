@@ -26,29 +26,74 @@ class UI {
             if (!this.isExclusive) terminalInput.focus();
         });
 
+        // Add auto-copy listener
+        document.addEventListener('selectionchange', () => this.handleSelection());
+
         // Load persisted theme
         const savedTheme = localStorage.getItem('consoul_theme');
-        if (savedTheme) document.body.classList.add(`theme-${savedTheme}`);
+        if (savedTheme) {
+            document.body.classList.add(`theme-${savedTheme}`);
+        } else {
+            // Default to matrix if no theme set
+            document.body.classList.add('theme-matrix');
+        }
+
+        // Start sys monitor
+        setInterval(() => this.updateSysMonitor(), 2000);
 
         this.printBanner();
         this.updatePrompt();
     }
 
-    openEditor(filename, initialContent, onSave, onExit) {
+    handleSelection() {
+        const selection = window.getSelection();
+        if (selection.toString().length > 0) {
+            navigator.clipboard.writeText(selection.toString()).catch(err => {
+                console.error("Auto-copy failed", err);
+            });
+        }
+    }
+
+    updateSysMonitor() {
+        const cpu = Math.floor(Math.random() * 10);
+        const mem = Math.floor(20 + Math.random() * 5);
+        document.getElementById('sys-monitor').textContent = `CPU: ${cpu}% | MEM: ${mem}%`;
+    }
+
+    openEditor(filename, initialContent, onSave, onExit, editorType = 'edit') {
         this.isExclusive = true;
         editorContainer.classList.remove('hidden');
-        editorHeader.textContent = `Editing: ${filename}`;
+        
+        if (editorType === 'nano') {
+            editorHeader.textContent = `  GNU nano 6.2                        ${filename}`;
+            document.getElementById('editor-footer').innerHTML = '^G Get Help  ^O Write Out  ^W Where Is  ^K Cut Text    ^J Justify    ^C Cur Pos\n^X Exit      ^R Read File  ^\\ Replace    ^U Uncut Text  ^T To Spell   ^_ Go To Line';
+        } else {
+            editorHeader.textContent = `Editing: ${filename}`;
+            document.getElementById('editor-footer').innerHTML = '^S Save | ^X Exit';
+        }
+
         editorTextArea.value = initialContent;
         editorTextArea.focus();
 
+        let isModified = false;
+        editorTextArea.addEventListener('input', () => { isModified = true; });
+
         const handleEditorKeydown = (e) => {
-            if (e.ctrlKey && e.key === 's') {
+            if (e.ctrlKey && (e.key === 's' || e.key === 'o')) {
                 e.preventDefault();
                 onSave(editorTextArea.value);
-                editorHeader.textContent = `Editing: ${filename} (SAVED)`;
-                setTimeout(() => editorHeader.textContent = `Editing: ${filename}`, 1000);
+                isModified = false;
+                const originalHeader = editorHeader.textContent;
+                editorHeader.textContent = `[ Wrote ${editorTextArea.value.split('\n').length} lines ]`;
+                setTimeout(() => editorHeader.textContent = originalHeader, 2000);
             } else if (e.ctrlKey && e.key === 'x') {
                 e.preventDefault();
+                if (isModified) {
+                    const confirmSave = confirm("Save modified buffer?");
+                    if (confirmSave) {
+                        onSave(editorTextArea.value);
+                    }
+                }
                 this.closeEditor();
                 editorTextArea.removeEventListener('keydown', handleEditorKeydown);
                 onExit();
@@ -56,11 +101,94 @@ class UI {
         };
 
         editorTextArea.addEventListener('keydown', handleEditorKeydown);
+        // Force focus back if user clicks away
+        editorTextArea.addEventListener('blur', () => {
+            if (this.isExclusive) {
+                setTimeout(() => editorTextArea.focus(), 0);
+            }
+        });
     }
 
     closeEditor() {
         this.isExclusive = false;
         editorContainer.classList.add('hidden');
+        terminalInput.focus();
+    }
+
+    openVim(filename, initialContent, onSave, onExit) {
+        this.isExclusive = true;
+        editorContainer.classList.remove('hidden');
+        
+        let mode = 'NORMAL';
+        let commandLine = '';
+        
+        const updateVimUI = () => {
+            editorHeader.textContent = `  ${filename}                                 `;
+            if (mode === 'INSERT') {
+                document.getElementById('editor-footer').textContent = '-- INSERT --';
+            } else if (mode === 'COMMAND') {
+                document.getElementById('editor-footer').textContent = ':' + commandLine;
+            } else {
+                document.getElementById('editor-footer').textContent = '';
+            }
+        };
+
+        editorTextArea.value = initialContent;
+        editorTextArea.readOnly = true;
+        updateVimUI();
+        editorTextArea.focus();
+
+        const handleVimKeydown = (e) => {
+            if (mode === 'NORMAL') {
+                if (e.key === 'i') {
+                    e.preventDefault();
+                    mode = 'INSERT';
+                    editorTextArea.readOnly = false;
+                } else if (e.key === ':') {
+                    e.preventDefault();
+                    mode = 'COMMAND';
+                    commandLine = '';
+                }
+            } else if (mode === 'INSERT') {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    mode = 'NORMAL';
+                    editorTextArea.readOnly = true;
+                }
+            } else if (mode === 'COMMAND') {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const cmd = commandLine.trim();
+                    if (cmd === 'w' || cmd === 'wq') {
+                        onSave(editorTextArea.value);
+                    }
+                    if (cmd === 'q' || cmd === 'wq' || cmd === 'q!') {
+                        this.closeVim();
+                        editorTextArea.removeEventListener('keydown', handleVimKeydown);
+                        onExit();
+                    }
+                    mode = 'NORMAL';
+                    commandLine = '';
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    mode = 'NORMAL';
+                    commandLine = '';
+                } else if (e.key.length === 1) {
+                    commandLine += e.key;
+                } else if (e.key === 'Backspace') {
+                    commandLine = commandLine.slice(0, -1);
+                }
+            }
+            updateVimUI();
+        };
+
+        editorTextArea.addEventListener('keydown', handleVimKeydown);
+    }
+
+    closeVim() {
+        this.isExclusive = false;
+        editorContainer.classList.add('hidden');
+        editorTextArea.readOnly = false;
         terminalInput.focus();
     }
 
@@ -214,11 +342,12 @@ class UI {
 
     printBanner() {
         const banner = `
-   ______                               __ 
-  / ____/___  ____  _________  __  ____/ /
- / /   / __ \\/ __ \\/ ___/ __ \\/ / / / __  / 
-/ /___/ /_/ / / / (__  ) /_/ / /_/ / /_/ /  
-\\____/\\____/_/ /_/____/\\____/\\__,_/\\__,_/   
+██████╗ ██████╗ ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗     
+██╔════╝██╔═══██╗████╗  ██║██╔════╝██╔═══██╗██║   ██║██║     
+██║     ██║   ██║██╔██╗ ██║███████╗██║   ██║██║   ██║██║     
+██║     ██║   ██║██║╚██╗██║╚════██║██║   ██║██║   ██║██║     
+╚██████╗╚██████╔╝██║ ╚████║███████║╚██████╔╝╚██████╔╝███████╗
+ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝  ╚═════╝ ╚══════╝
                                             
 Welcome to Consoul Terminal v1.0.0
 Type 'help' to see available commands.
@@ -248,6 +377,25 @@ Type 'help' to see available commands.
     handleInput() {
         if (shell.authMode) return;
         const input = terminalInput.value;
+        
+        // Syntax highlighting logic
+        const tokens = input.trim().split(/\s+/);
+        const commandName = tokens[0];
+        if (commandName) {
+            shell.suggest(commandName).then(suggestions => {
+                const isValid = suggestions.includes(commandName);
+                if (isValid) {
+                    terminalInput.classList.remove('cmd-invalid');
+                    terminalInput.classList.add('cmd-valid');
+                } else {
+                    terminalInput.classList.remove('cmd-valid');
+                    terminalInput.classList.add('cmd-invalid');
+                }
+            });
+        } else {
+            terminalInput.classList.remove('cmd-valid', 'cmd-invalid');
+        }
+
         this.currentSuggestion = shell.getHistorySuggestion(input);
         
         if (this.currentSuggestion) {
@@ -262,6 +410,7 @@ Type 'help' to see available commands.
             const input = terminalInput.value;
             terminalInput.value = '';
             autoSuggestSpan.textContent = '';
+            terminalInput.classList.remove('cmd-valid', 'cmd-invalid');
             
             if (!shell.authMode) {
                 this.printCommand(input);
@@ -320,7 +469,23 @@ Type 'help' to see available commands.
     printOutput(output) {
         const line = document.createElement('div');
         line.className = 'line output-line';
-        line.textContent = output;
+        
+        // Regex to detect URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const linkedOutput = output.replace(urlRegex, (url) => {
+            return `<a href="${url}" target="_blank" title="Ctrl + left click to open in new tab" style="color: inherit;">${url}</a>`;
+        });
+        
+        line.innerHTML = linkedOutput;
+        
+        // Add event listener for Ctrl+Click
+        line.addEventListener('click', (e) => {
+            const target = e.target.closest('a');
+            if (target && e.ctrlKey) {
+                window.open(target.href, '_blank');
+            }
+        });
+        
         outputLog.appendChild(line);
     }
 
