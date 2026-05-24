@@ -48,5 +48,5 @@ export default async function ls(args, shell) {
         const child = node.children[name];
         const fullPath = vfs.resolvePath(name, vfs.resolvePath(pathArg, shell.cwd));
         return colorize(name, child, fullPath);
-    }).join('  ');
+    }).join('\n');
 }

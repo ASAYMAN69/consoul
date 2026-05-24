@@ -18,7 +18,7 @@ class Shell {
             'clear', 'grep', 'find', 'export', 'alias', 'help', 'history', 'reset', 
             'whoami', 'date', 'uptime', 'uname', 'exit', 'env', 'mv', 'cp',
             'sudo', 'chmod', 'chown', 'ps', 'top', 'who', 'head', 'tail', 'wc', 'edit', 'fetch', 'matrix',
-            'sh', 'ping', 'curl', 'theme', 'snake', 'nano', 'vim'
+            'sh', 'ping', 'curl', 'theme', 'snake', 'nano', 'vim', 'tetris'
         ];
     }
 
@@ -94,6 +94,8 @@ class Shell {
                 return arg;
             });
 
+            const finalArgs = this.expandGlob(expandedArgs);
+
             this.pipeInput = pipeInput;
 
             // Check aliases
@@ -106,7 +108,7 @@ class Shell {
             try {
                 const module = await import(`../commands/${actualCommand}.js`);
                 if (module && module.default) {
-                    pipeInput = await module.default(expandedArgs, this);
+                    pipeInput = await module.default(finalArgs, this);
                 } else {
                     return `consoul: internal error: ${actualCommand}.js is empty`;
                 }
@@ -181,15 +183,8 @@ class Shell {
         const lastToken = tokens[tokens.length - 1];
         
         if (tokens.length === 1) {
-            // Suggest commands
-            const commands = [
-                'ls', 'cd', 'pwd', 'mkdir', 'touch', 'rm', 'cat', 'echo', 'write', 'append', 
-                'clear', 'grep', 'find', 'export', 'alias', 'help', 'history', 'reset', 
-                'whoami', 'date', 'uptime', 'uname', 'exit', 'env', 'mv', 'cp',
-                'sudo', 'chmod', 'chown', 'ps', 'top', 'who', 'head', 'tail', 'wc', 'edit', 'fetch', 'matrix',
-                'sh', 'ping', 'curl', 'theme', 'snake', 'nano', 'vim'
-            ];
-            return commands.filter(c => c.startsWith(lastToken));
+            // Suggest commands using the central whitelist
+            return this.validCommands.filter(c => c.startsWith(lastToken));
         } else {
             // Suggest paths
             return vfs.getSuggestions(lastToken, this.cwd);

@@ -1,7 +1,7 @@
 import { vfs } from '../core/vfs.js';
 
 export default async function cat(args, shell) {
-    if (args.length === 0) return '';
+    if (args.length === 0) return shell.pipeInput || '';
     
     const path = args[0];
     const node = vfs.getNode(path, shell.cwd);

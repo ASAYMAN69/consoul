@@ -10,6 +10,7 @@ const editorTextArea = document.getElementById('editor-textarea');
 const editorHeader = document.getElementById('editor-header');
 const matrixCanvas = document.getElementById('matrix-canvas');
 const snakeCanvas = document.getElementById('snake-canvas');
+const tetrisCanvas = document.getElementById('tetris-canvas');
 
 class UI {
     constructor() {
@@ -337,6 +338,160 @@ class UI {
     closeSnake() {
         this.isExclusive = false;
         snakeCanvas.classList.add('hidden');
+        terminalInput.focus();
+    }
+
+    openTetris(onExit) {
+        this.isExclusive = true;
+        tetrisCanvas.classList.remove('hidden');
+        
+        const ctx = tetrisCanvas.getContext('2d');
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 20;
+        tetrisCanvas.width = COLS * BLOCK_SIZE;
+        tetrisCanvas.height = ROWS * BLOCK_SIZE;
+
+        let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let score = 0;
+
+        const SHAPES = [
+            [[1, 1, 1, 1]],
+            [[1, 1], [1, 1]],
+            [[0, 1, 0], [1, 1, 1]],
+            [[1, 0, 0], [1, 1, 1]],
+            [[0, 0, 1], [1, 1, 1]],
+            [[1, 1, 0], [0, 1, 1]],
+            [[0, 1, 1], [1, 1, 0]]
+        ];
+
+        let piece = {
+            shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+            x: 3,
+            y: 0
+        };
+
+        const draw = () => {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, tetrisCanvas.width, tetrisCanvas.height);
+
+            // Draw grid
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (grid[y][x]) {
+                        ctx.fillStyle = "cyan";
+                        ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                    }
+                }
+            }
+
+            // Draw piece
+            ctx.fillStyle = "yellow";
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        ctx.fillRect((piece.x + x) * BLOCK_SIZE, (piece.y + y) * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                    }
+                }
+            }
+
+            ctx.fillStyle = "white";
+            ctx.font = "14px monospace";
+            ctx.fillText(`Score: ${score}`, 5, 15);
+        };
+
+        const move = (dx, dy) => {
+            piece.x += dx;
+            piece.y += dy;
+            if (collision()) {
+                piece.x -= dx;
+                piece.y -= dy;
+                if (dy > 0) {
+                    lock();
+                    piece = {
+                        shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+                        x: 3,
+                        y: 0
+                    };
+                    if (collision()) {
+                        clearInterval(game);
+                        this.printOutput(`Game Over! Score: ${score}`);
+                        this.closeTetris();
+                        document.removeEventListener("keydown", handleKey);
+                        onExit();
+                    }
+                }
+                return false;
+            }
+            return true;
+        };
+
+        const rotate = () => {
+            const oldShape = piece.shape;
+            piece.shape = piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse());
+            if (collision()) piece.shape = oldShape;
+        };
+
+        const collision = () => {
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        let nx = piece.x + x;
+                        let ny = piece.y + y;
+                        if (nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && grid[ny][nx])) return true;
+                    }
+                }
+            }
+            return false;
+        };
+
+        const lock = () => {
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        if (piece.y + y >= 0) grid[piece.y + y][piece.x + x] = 1;
+                    }
+                }
+            }
+            clearLines();
+        };
+
+        const clearLines = () => {
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (grid[y].every(cell => cell)) {
+                    grid.splice(y, 1);
+                    grid.unshift(Array(COLS).fill(0));
+                    score += 100;
+                    y++;
+                }
+            }
+        };
+
+        const handleKey = (e) => {
+            if (e.keyCode === 37) move(-1, 0);      // Left
+            else if (e.keyCode === 39) move(1, 0); // Right
+            else if (e.keyCode === 40) move(0, 1); // Down
+            else if (e.keyCode === 38) rotate();   // Up (Rotate)
+            else if (e.key === 'Escape' || (e.ctrlKey && e.key === 'c')) {
+                clearInterval(game);
+                this.closeTetris();
+                document.removeEventListener("keydown", handleKey);
+                onExit();
+            }
+            draw();
+        };
+
+        document.addEventListener("keydown", handleKey);
+        let game = setInterval(() => {
+            move(0, 1);
+            draw();
+        }, 500);
+        draw();
+    }
+
+    closeTetris() {
+        this.isExclusive = false;
+        tetrisCanvas.classList.add('hidden');
         terminalInput.focus();
     }
 

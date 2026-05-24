@@ -29,6 +29,7 @@ export default async function help(args, shell) {
         'curl [url]       - Transfer data from a URL (simulated)',
         'theme [name]     - Change terminal theme (matrix, ubuntu, retro, classic, nord, monokai)',
         'snake            - Play a game of Snake (Arrow keys to move, Esc to exit)',
+        'tetris           - Play a game of Tetris (Arrows to move/rotate, Esc to exit)',
         'echo [text]      - Print text',
         'write [file] [c] - Write content to file',
         'append [file] [c]- Append content to file',
