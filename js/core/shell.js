@@ -161,6 +161,51 @@ class Shell {
         });
     }
 
+    expandGlob(args) {
+        const result = [];
+        for (const arg of args) {
+            if (arg.includes('*') || arg.includes('?')) {
+                const matches = this.globMatch(arg);
+                if (matches.length > 0) {
+                    result.push(...matches);
+                } else {
+                    result.push(arg);
+                }
+            } else {
+                result.push(arg);
+            }
+        }
+        return result;
+    }
+
+    globMatch(pattern) {
+        const dir = pattern.includes('/') ? pattern.substring(0, pattern.lastIndexOf('/')) : '';
+        const glob = pattern.includes('/') ? pattern.substring(pattern.lastIndexOf('/') + 1) : pattern;
+        const parentPath = dir ? this.resolvePath(dir) : this.cwd;
+        const parent = vfs.getNode(parentPath);
+        if (!parent || parent.type !== 'dir') return [];
+
+        const regexStr = glob
+            .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+            .replace(/\*/g, '.*')
+            .replace(/\?/g, '.');
+        const regex = new RegExp(`^${regexStr}$`);
+        
+        const results = [];
+        for (const name of Object.keys(parent.children)) {
+            if (regex.test(name)) {
+                const full = dir ? `${dir}/${name}` : name;
+                results.push(full);
+            }
+        }
+        return results.sort();
+    }
+
+    resolvePath(path) {
+        if (path.startsWith('/')) return vfs.resolvePath(path);
+        return vfs.resolvePath(path, this.cwd);
+    }
+
     setEnv(key, value) {
         this.env[key] = value;
     }
